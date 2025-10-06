@@ -86,7 +86,7 @@ Streamers rely on donations for income, but crypto donations are fragmented:
 
 ---
 
-## 6. MVP Scope for Hackathon
+## 6. MVP Scope for Buildathon
 
 - Accept any crypto → swap → payout in preferred token
 - Simple web interface with dedicated donation page, and QR optionally
