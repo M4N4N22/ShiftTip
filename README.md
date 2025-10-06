@@ -1,123 +1,208 @@
-# ShiftTip — Product Requirements Document
+# ShiftTip
 
-**Product Name:** ShiftTip  
-**Tagline:** *"Boost Your Earnings, Accept Donations in Any Crypto, On Any Chain."*
+**Boost Your Earnings, Accept Donations in Any Crypto, On Any Chain.**
 
-Your viewers can donate in any cryptocurrency on any blockchain, and you get paid in your preferred token instantly. Live alerts, TTS notifications, and seamless crypto support make engaging your audience effortless.
-
-**Category:** Crypto / Live Streaming / Donations / Web3
+ShiftTip enables streamers to accept cryptocurrency donations in any token, on any blockchain, while automatically receiving payouts in their preferred stable token. Built for the SideShift Wavehack, ShiftTip eliminates the friction of multi-chain crypto donations with live alerts, TTS notifications, and seamless SideShift API integration.
 
 ---
 
-## 1. Problem Statement
+## Features
 
-Streamers rely on donations for income, but crypto donations are fragmented:
-
-- Fans hold many different tokens across multiple chains
-- Streamers currently have to ask for specific tokens (ETH only, SOL only, etc.)
-- Onboarding fans is hard: they often must convert crypto themselves before donating
-- Current donation tools (Twitch, YouTube Superchat) don't support **multi-chain, multi-token crypto donations**
-
-**Impact:** Limits fan participation, lowers donation volume, increases friction, and prevents crypto adoption.
-
----
-
-## 2. Solution
-
-**ShiftTip** enables:
-
-1. Fans to donate in **any crypto token**
-2. Automatic conversion into a **stable, preferred token** (e.g., USDC) for the streamer
-3. **Instant live interaction**: donations trigger **on-screen overlays or TTS messages**, enhancing engagement
-
-**Key benefits:**
-
-- Streamers get predictable payouts
-- Fans can donate with *whatever crypto they already own*
-- Zero friction onboarding for new crypto users
-- Fun, hype-driven live experience for viewers
+- **Multi-Chain Donations**: Accept any cryptocurrency from any blockchain
+- **Automatic Conversion**: Donors send any token, you receive your preferred token (USDC, ETH, etc.)
+- **Live Overlay Alerts**: Real-time donation notifications with customizable overlays
+- **Text-to-Speech**: Hear donation messages read aloud during streams
+- **QR Code Generation**: Easy donation links and QR codes for viewers
+- **Donation Tracking**: View recent donations and track earnings
+- **Zero Friction**: Donors use whatever crypto they already own
 
 ---
 
-## 3. Core Features
+## Tech Stack
 
-| Feature | Description | Hackathon MVP | Post-MVP / Expansion |
-|---------|-------------|---------------|---------------------|
-| Multi-token donations | Accept any token, on any chain | SideShift API swap on-demand | Support bulk / batch swaps |
-| Auto-convert to USDC | Ensure stable payout | SideShift API handles conversion | Option for streamers to choose payout token |
-| Donation UI / QR generator | Simple web interface | React + QR code | OBS plugin, direct browser source |
-| Overlay / TTS | Visual & audio confirmation | In-browser popup + speechSynthesis | Full OBS integration, voice options, animations |
-| Donation tracking | Track incoming donations | Backend DB (SQLite / Redis) | Analytics dashboard, top donors, historical data |
-| Anti-fraud / limits | Prevent spam / mistakes | Manual max donation check | AI moderation, tipping limits, multi-chain alerts |
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **API Integration**: SideShift API for cross-chain swaps
+- **TTS**: Browser speechSynthesis API
 
 ---
 
-## 4. User Flows
+## Project Structure
 
-### 4.1 Viewer Flow
+```
+app/
+├── (main)/
+│   ├── dashboard/
+│   │   └── page.tsx          # Streamer dashboard
+│   ├── donate/
+│   │   └── page.tsx          # Public donation page
+│   └── layout.tsx
+├── favicon.ico
+├── globals.css
+├── layout.tsx
+└── page.tsx                  # Landing page
 
-1. Viewer sees Donation Page URL / "Donate any crypto" button
-2. Selects token + amount + name (optional)
-3. Optionally enters a short message
-4. Viewer tests overlay to preview, proceeds to click send ShiftTip
-5. SideShift executes swap with streamer's preferred token, donation sent
-6. Viewer sees confirmation: donation processed, overlay triggered live
+components/
+├── dashboard/
+│   ├── DonationLinks.tsx     # Shareable donation links
+│   ├── RecentDonations.tsx   # Recent donations list
+│   ├── SettingsForm.tsx      # Streamer settings
+│   ├── SetupForm.tsx         # Initial setup
+│   └── StatsCards.tsx        # Donation statistics
+├── donate/
+│   ├── AmountMessageInput.tsx # Donation amount & message
+│   ├── DonateHeader.tsx      # Donation page header
+│   ├── DonationForm.tsx      # Main donation form
+│   ├── DonationResult.tsx    # Donation confirmation
+│   ├── TokenSelector.tsx     # Token selection dropdown
+│   ├── useSideShift.ts       # SideShift API hook
+│   └── WalletInfo.tsx        # Wallet display
+├── overlay/
+│   └── index.tsx             # Stream overlay component
+├── LandingPage.tsx           # Landing page component
+└── Navigation.tsx            # Navigation component
 
-### 4.2 Streamer Flow
-
-1. Logs into ShiftTip dashboard (or browser overlay)
-2. Chooses **preferred payout token**
-3. Overlay displays incoming donations with TTS
-4. Optional: streamer sees mini-dashboard for donation history
-
----
-
-## 5. Architecture / Tech Stack
-
-- **Frontend:** Next.js (React), QR generator (`qrcode.react`), overlay UI
-- **Backend:** Node.js / Next.js API routes → call SideShift API, track donation status
-- **Database:** SQLite / Redis / Firestore (track donation metadata)
-- **TTS / Overlay:**
-  - Browser: `speechSynthesis` for demo
-  - Future: OBS plugin with browser source URL
-- **SideShift API:**
-  - `createVariableShift` → generate deposit address + swap execution
-  - `getShift` → confirm completion and update UI
-
----
-
-## 6. MVP Scope for Buildathon
-
-- Accept any crypto → swap → payout in preferred token
-- Simple web interface with dedicated donation page, and QR optionally
-- Donation popup + TTS in browser for live demo
-- Backend tracks donation status + basic logging
-
----
-
-## 7. Success Metrics
-
-- **Demo-ready**: Fans can send crypto and see streamer receive donations instantly
-- **Engagement:** Overlay/TTS triggers on each donation
-- **Stability:** Successful swap confirmations via SideShift API
-- **Ease of use:** < 3 clicks for viewer to donate
+lib/
+├── fetchSideShiftTokens.ts   # Fetch available tokens
+├── fetchTokenBalance.ts      # Get token balance
+├── fetchWalletBalances.ts    # Get wallet balances
+└── utils.ts                  # Utility functions
+```
 
 ---
 
-## 8. Future Enhancements
+## Getting Started
 
-- OBS / streaming software integration
-- Recurring donations / subscription-like donations using contracts
-- Analytics dashboard: top donors, donation history, token breakdown
-- Multi-token payout options for streamers
-- Donation badges, NFT rewards for fans
+### Prerequisites
+
+- Node.js 18+ and npm/yarn/pnpm
+- A crypto wallet address for receiving donations
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/shifttip.git
+cd shifttip
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Run the development server:
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Configuration
+
+1. Navigate to the dashboard at `/dashboard`
+2. Complete the setup form with your:
+   - Wallet address
+   - Preferred payout token
+   - Stream settings
+3. Share your donation page URL with viewers
 
 ---
 
-## 9. Wavehack Demo Flow
+## Usage
 
-1. Streamer shares donation page URL in browser
-2. Viewer selects token + amount + name (opt) + TTS message (opt)
-3. SideShift executes swap → confirms deposit to streamer wallet
-4. Popup shows: "ShiftTip from Alex: 5 DOGE or USD equivalent – Love your stream!"
-5. TTS plays the message instantly
+### For Streamers
+
+1. **Setup**: Configure your wallet and preferred payout token in the dashboard
+2. **Share**: Send your donation page link to viewers
+3. **Stream**: Display the overlay URL in your streaming software (OBS, Streamlabs, etc.)
+4. **Receive**: Get donations automatically converted to your preferred token
+
+### For Viewers
+
+1. Visit the streamer's donation page
+2. Select any cryptocurrency you own
+3. Enter the amount and optional message
+4. Send the donation
+5. See your donation appear live on stream
+
+---
+
+## How It Works
+
+1. **Viewer initiates donation**: Selects token, amount, and message
+2. **SideShift API integration**: Creates a variable shift for token conversion
+3. **Deposit address generation**: Viewer receives a deposit address
+4. **Token swap**: SideShift automatically swaps to streamer's preferred token
+5. **Live notification**: Overlay displays donation with TTS message
+6. **Confirmation**: Both viewer and streamer see confirmation
+
+---
+
+## API Integration
+
+ShiftTip uses the SideShift API for cross-chain token swaps:
+
+- **createVariableShift**: Generates deposit address and swap parameters
+- **getShift**: Checks swap status and confirms completion
+
+No API key required for basic usage.
+
+---
+
+## Roadmap
+
+- [ ] OBS plugin for native overlay integration
+- [ ] Recurring donation subscriptions
+- [ ] Advanced analytics dashboard
+- [ ] Multi-token payout options
+- [ ] Donation badges and NFT rewards
+- [ ] Mobile app for streamers
+- [ ] Donation goal tracking
+- [ ] Custom overlay themes
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Acknowledgments
+
+- Built for the SideShift Wavehack 
+- Powered by [SideShift.ai](https://sideshift.ai) for cross-chain swaps
+- UI components from [shadcn/ui](https://ui.shadcn.com)
+
+---
+
+## Support
+
+For questions or issues, please open an issue on GitHub or contact the maintainers.
+
+---
+
+Built with passion for the crypto streaming community.
