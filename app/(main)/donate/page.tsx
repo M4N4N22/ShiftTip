@@ -1,7 +1,13 @@
 "use client";
 import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import DonateHeader from "@/components/donate/DonateHeader";
 import DonationForm from "@/components/donate/DonationForm";
@@ -11,7 +17,7 @@ import { useSearchParams } from "next/navigation";
 function DonatePageInner() {
   const searchParams = useSearchParams();
   const streamerName = searchParams.get("streamer") || "Streamer";
-  const settleAddress =
+  const creatorWallet =
     searchParams.get("wallet") || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
   const preferredToken = searchParams.get("token") || "usdc";
   const preferredChain = searchParams.get("chain") || "ethereum";
@@ -21,15 +27,16 @@ function DonatePageInner() {
   const [amount, setAmount] = useState("");
 
   return (
-    <div className="container flex justify-center pt-24 pb-12 w-full">
+    <div className=" flex justify-center pt-24 pb-12 w-full ">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="w-full px-4"
       >
         <DonateHeader streamerName={streamerName} />
 
-        <Card>
+        <Card className=" border-2 border-white/10 w-full">
           <CardHeader>
             <CardTitle>Make a Donation</CardTitle>
             <CardDescription>
@@ -37,10 +44,10 @@ function DonatePageInner() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="w-full">
             {!depositAddress ? (
               <DonationForm
-                settleAddress={settleAddress}
+                creatorWallet={creatorWallet}
                 preferredToken={preferredToken}
                 preferredChain={preferredChain}
                 onDonationReady={(addr, t, amt) => {

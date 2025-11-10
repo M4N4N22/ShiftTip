@@ -1,0 +1,55 @@
+.arrow-container {
+  position: relative;
+  flex: 1;
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Single arrow shape */
+.arrow {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 0.4rem solid;
+  border-color: #f504c5 transparent transparent #f504c5;
+  transform: rotate(-180deg);
+  opacity: 0.5;
+}
+
+/* Each arrow instance slides across */
+.arrowSliding {
+  position: absolute;
+  animation: slide 4s linear infinite;
+}
+
+.delay1 {
+  animation-delay: 1s;
+}
+.delay2 {
+  animation-delay: 2s;
+}
+.delay3 {
+  animation-delay: 3s;
+}
+
+/* Animate left → right */
+@keyframes slide {
+  0% {
+    opacity: 0;
+    transform: translateX(-15vw) rotate(-45deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(-9vw) rotate(-45deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(9vw) rotate(-45deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(15vw) rotate(-45deg);
+  }
+}

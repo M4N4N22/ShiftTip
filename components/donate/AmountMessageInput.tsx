@@ -1,108 +1,75 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, Coins } from "lucide-react";
+import { Volume2 } from "lucide-react";
 
 interface AmountMessageInputProps {
-  amount: string;
-  setAmount: (amt: string) => void;
   donorName: string;
-  setDonorName: (don: string) => void;
+  setDonorName: (name: string) => void;
   message: string;
   setMessage: (msg: string) => void;
 }
 
-export const AmountMessageInput = ({
-  amount,
-  setAmount,
+export function AmountMessageInput({
   donorName,
   setDonorName,
   message,
   setMessage,
-}: AmountMessageInputProps) => {
+}: AmountMessageInputProps) {
   const [speaking, setSpeaking] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
-  const testMessageTTS = () => {
-    if (!message) return;
-
-    const donationPreview = {
-      id: Date.now(),
-      donor: donorName || "You",
-      amount: amount || "0",
-      currency: "USD",
-      message,
+  const speakFallback = (text: string) => {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice =
+      window.speechSynthesis
+        .getVoices()
+        .find((v) => v.name.includes("Google")) || null;
+    utterance.onend = () => {
+      setSpeaking(false);
+      setTimeout(() => setShowOverlay(false), 1000);
     };
+    setSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
 
+  const testMessageTTS = async () => {
+    if (!message) return;
+    const text = `${donorName || "You"} says: ${message}`;
     setShowOverlay(true);
+    setSpeaking(true);
 
-    if ("speechSynthesis" in window) {
-      setSpeaking(true);
-      const utterance = new SpeechSynthesisUtterance(
-        `${donationPreview.donor} donated ${donationPreview.amount} dollars! ${
-          donationPreview.message ? `They said: ${donationPreview.message}` : ""
-        }`
-      );
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "en_us_male" }),
+      });
 
-      // Wait until voices are loaded (some browsers delay it)
-      const setBestVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
+      const data = await res.json();
+      if (!res.ok || !data.audio) throw new Error("TTS failed");
 
-        // Try finding a natural English voice (Google or Microsoft)
-        const preferred =
-          voices.find((v) =>
-            v.name.toLowerCase().includes("google us english male")
-          ) ||
-          voices.find((v) =>
-            v.name.toLowerCase().includes("google us english female")
-          ) ||
-          voices.find((v) => v.name.toLowerCase().includes("google")) ||
-          voices.find((v) => v.lang.startsWith("en")) ||
-          voices[0];
-
-        if (preferred) utterance.voice = preferred;
-      };
-
-      if (window.speechSynthesis.getVoices().length === 0) {
-        // Some browsers need a dummy call to populate voices
-        window.speechSynthesis.onvoiceschanged = setBestVoice;
-      } else {
-        setBestVoice();
-      }
-
-      // Slightly faster, more lively tone
-      utterance.rate = 1;
-      utterance.pitch = 1.1;
-      utterance.volume = 1;
-
-      utterance.onend = () => {
+      const audio = new Audio(data.audio);
+      audio.onended = () => {
         setSpeaking(false);
         setTimeout(() => setShowOverlay(false), 1000);
       };
-
-      window.speechSynthesis.speak(utterance);
+      await audio.play();
+    } catch (err) {
+      console.warn("Server TTS failed, falling back:", err);
+      speakFallback(text);
     }
   };
 
   return (
     <div className="space-y-4 relative">
-      <div className="space-y-2">
-        <Label>Amount (USD equivalent)</Label>
-        <Input
-          type="number"
-          placeholder="0.00"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-      </div>
-
       <div className="space-y-2 relative">
-        <Label>Message (Optional)</Label>
+        <Label>Message <span className="text-white/50">(optional)</span></Label>
         <Textarea
           rows={3}
           placeholder="Say something nice..."
@@ -117,7 +84,7 @@ export const AmountMessageInput = ({
           disabled={!message || speaking}
         >
           <Volume2 className="w-4 h-4" />
-          {speaking ? "Speaking..." : "Test Overlay"}
+          {speaking ? "Speaking..." : "Preview"}
         </Button>
       </div>
 
@@ -130,42 +97,15 @@ export const AmountMessageInput = ({
             transition={{ type: "spring", duration: 0.6 }}
             className="fixed bottom-8 right-8 pointer-events-none z-50"
           >
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary  to-primary blur-xl opacity-60 animate-pulse" />
-
-              <div className="relative bg-background backdrop-blur-lg border-2 border-primary rounded-2xl shadow-2xl p-6 min-w-[400px]">
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-xl font-bold">
-                        {donorName || "You"}
-                      </h3>
-                      {speaking && (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 1 }}
-                        >
-                          <Volume2 className="w-5 h-5 text-accent" />
-                        </motion.div>
-                      )}
-                    </div>
-
-                    <div className="text-3xl font-bold gradient-text mb-2">
-                      ${amount || "0"}
-                    </div>
-
-                    {message && (
-                      <p className="text-sm text-muted-foreground italic">
-                        "{message}"
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
+            <div className="relative bg-background/70 backdrop-blur-xl border-2 border-primary rounded-2xl shadow-2xl p-6 min-w-[350px]">
+              <h3 className="text-lg font-semibold">{donorName || "You"}</h3>
+              <p className="italic text-sm text-muted-foreground mt-1">
+                "{message}"
+              </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-};
+}

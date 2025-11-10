@@ -8,8 +8,13 @@ interface WalletInfoProps {
   isConnected: boolean;
 }
 
-export const WalletInfo = ({ address, donorName, setDonorName, isConnected }: WalletInfoProps) => (
-  <div className="space-y-4">
+export const WalletInfo = ({
+  address,
+  donorName,
+  setDonorName,
+  isConnected,
+}: WalletInfoProps) => (
+  <div className="space-y-6">
     {!isConnected && (
       <p className="text-sm text-muted-foreground">
         Please connect your wallet to continue.
@@ -17,12 +22,16 @@ export const WalletInfo = ({ address, donorName, setDonorName, isConnected }: Wa
     )}
 
     <div className="space-y-2">
-      <Label>Wallet Address (Auto-filled)</Label>
+      <Label>
+        Your Wallet Address <span className="text-white/50">(Auto-filled)</span>
+      </Label>
       <Input value={address || ""} disabled />
     </div>
 
     <div className="space-y-2">
-      <Label>Your Name (Optional)</Label>
+      <Label>
+        Your Name <span className="text-white/50">(optional)</span>
+      </Label>
       <Input
         value={donorName}
         onChange={(e) => setDonorName(e.target.value)}
