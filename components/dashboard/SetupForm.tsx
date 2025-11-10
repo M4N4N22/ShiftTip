@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAccount } from "wagmi";
+import { ConnectKitButton } from "connectkit";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface SetupFormProps {
   streamerName: string;
@@ -28,7 +32,7 @@ interface SetupFormProps {
   setDonationToken: (v: string) => void;
   donationChain: string;
   setDonationChain: (v: string) => void;
-  handleSetup: () => void;
+  setIsSetup: (v: boolean) => void;
 }
 
 const supportedTokens = [
@@ -63,15 +67,59 @@ export default function SetupForm({
   setDonationToken,
   donationChain,
   setDonationChain,
-  handleSetup,
+  setIsSetup,
 }: SetupFormProps) {
   const { address, isConnected } = useAccount();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isConnected && address) {
       setWalletAddress(address);
     }
   }, [isConnected, address, setWalletAddress]);
+
+  const handleSetup = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/setup/creator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet: walletAddress,
+          name: streamerName,
+          token: donationToken,
+          chain: donationChain,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Setup failed");
+
+      toast.success("Creator profile saved successfully!");
+      setIsSetup(true);
+    } catch (error: any) {
+      console.error("Setup error:", error);
+      toast.error(error.message || "Failed to complete setup");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isConnected) {
+    return (
+      <Card className="min-w-xl text-center py-12">
+        <CardHeader>
+          <CardTitle>Connect Your Wallet</CardTitle>
+          <CardDescription>
+            Please connect your wallet to set up your donation preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <ConnectKitButton />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="min-w-xl">
@@ -102,7 +150,7 @@ export default function SetupForm({
           />
         </div>
 
-        <div className=" flex gap-3 ">
+        <div className="flex gap-3">
           <div className="space-y-3 w-1/2">
             <Label>Preferred Donation Token</Label>
             <Select value={donationToken} onValueChange={setDonationToken}>
@@ -135,14 +183,26 @@ export default function SetupForm({
             </Select>
           </div>
         </div>
+
         <Button
           onClick={handleSetup}
           className="w-full"
           disabled={
-            !walletAddress || !streamerName || !donationToken || !donationChain
+            loading ||
+            !walletAddress ||
+            !streamerName ||
+            !donationToken ||
+            !donationChain
           }
         >
-          Complete Setup
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Complete Setup"
+          )}
         </Button>
       </CardContent>
     </Card>

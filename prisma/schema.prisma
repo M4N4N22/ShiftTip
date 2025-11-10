@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String  @id @default(cuid())
+  wallet    String  @unique
+  isCreator Boolean @default(false)
+  isDonor   Boolean @default(false)
+
+  name      String?
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Creator setup
+  preferredToken String?
+  preferredChain String?
+
+  // Relations
+  shiftsSent     Shift[] @relation("UserShifts")
+  shiftsReceived Shift[] @relation("CreatorShifts")
+}
+
+model Shift {
+  id      String @id @default(cuid())
+  shiftId String @unique
+
+  // Relations
+  creatorId String // FK to creator user
+  userId    String // FK to donor user
+  creator   User   @relation("CreatorShifts", fields: [creatorId], references: [id])
+  donor     User   @relation("UserShifts", fields: [userId], references: [id])
+
+  amount    Float
+  token     String
+  network   String
+  txHash    String?
+  status    String   @default("waiting") // waiting | confirming | completed | cancelled | expired
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+    // --- Address Tracking ---
+  donorAddress   String   // wallet that initiated donation
+  creatorAddress String   // final payout address (creator)
+  settleAddress  String   // temporary SideShift deposit address
+
+  // --- Lifecycle metadata ---
+  expiresAt     DateTime // 6-day expiry from creation
+  cancellableAt DateTime // 5-minute mark after creation when manual cancel is allowed
+  cancelledAt   DateTime?
+  completedAt   DateTime?
+  expiredAt     DateTime?
+}
