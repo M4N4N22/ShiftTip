@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserIp } from "@/lib/getUserIp";
 
 export const dynamic = "force-dynamic"; // Disable caching for live updates
 
 export async function POST(req: Request) {
   // Generate a unique trace ID for this request
   const traceId = `shift_${Math.random().toString(36).slice(2, 10)}`;
-  const log = (...args: any[]) => console.log(`[SHIFT CREATE][${traceId}]`, ...args);
-  const logError = (...args: any[]) => console.error(`[SHIFT CREATE][${traceId}]`, ...args);
+  const log = (...args: any[]) =>
+    console.log(`[SHIFT CREATE][${traceId}]`, ...args);
+  const logError = (...args: any[]) =>
+    console.error(`[SHIFT CREATE][${traceId}]`, ...args);
+
+  const userIp = getUserIp(req);
+  log("Resolved user IP:", userIp);
 
   try {
     const body = await req.json();
@@ -18,11 +24,11 @@ export async function POST(req: Request) {
       depositNetwork,
       settleCoin,
       settleNetwork,
-      settleAddress,  // temporary SideShift deposit address (will be returned)
-      refundAddress,  // donor’s refund address
-      creatorWallet,  // creator’s final receiving wallet
-      donorWallet,    // donor’s connected wallet
-      amount,         // donation amount
+      settleAddress, // temporary SideShift deposit address (will be returned)
+      refundAddress, // donor’s refund address
+      creatorWallet, // creator’s final receiving wallet
+      donorWallet, // donor’s connected wallet
+      amount, // donation amount
       affiliateId = process.env.SIDESHIFT_AFFILIATE_ID,
       commissionRate = "0.02",
     } = body;
@@ -37,8 +43,19 @@ export async function POST(req: Request) {
       !donorWallet ||
       !amount
     ) {
-      logError("Missing required fields:", { depositCoin, settleCoin, depositNetwork, settleNetwork, creatorWallet, donorWallet, amount });
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+      logError("Missing required fields:", {
+        depositCoin,
+        settleCoin,
+        depositNetwork,
+        settleNetwork,
+        creatorWallet,
+        donorWallet,
+        amount,
+      });
+      return NextResponse.json(
+        { error: "Missing required fields." },
+        { status: 400 }
+      );
     }
 
     // --- Prepare payload for SideShift ---
@@ -60,6 +77,7 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "application/json",
         "x-sideshift-secret": process.env.SIDESHIFT_SECRET!,
+        "x-user-ip": userIp,
       },
       body: JSON.stringify(payload),
     });
@@ -72,7 +90,10 @@ export async function POST(req: Request) {
       data = JSON.parse(rawText);
     } catch {
       logError("Invalid JSON from SideShift:", rawText);
-      return NextResponse.json({ error: "Invalid JSON from SideShift" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Invalid JSON from SideShift" },
+        { status: 500 }
+      );
     }
 
     if (!res.ok) {

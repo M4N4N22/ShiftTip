@@ -42,11 +42,11 @@ export default function DonationLinks({
   };
 
   return (
-    <div className="space-y-4 flex items-center gap-1">
+    <div className="space-y-4 flex gap-1">
       {" "}
       {/* Donation Page */}{" "}
       <div className="gap-1 flex flex-col w-full">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full ">
           <CardHeader>
             <CardTitle>Your Donation Page</CardTitle>
             <CardDescription>
@@ -75,7 +75,7 @@ export default function DonationLinks({
         </Card>
 
         {/* Overlay Card */}
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full ">
           <CardHeader>
             <CardTitle>Stream Overlay URL</CardTitle>
             <CardDescription>
@@ -113,7 +113,7 @@ export default function DonationLinks({
             variant="secondary"
             size="sm"
             onClick={() => setShowQR(!showQR)}
-            className="flex items-center gap-2 w-60 h-60"
+            className="flex  gap-2 w-72 h-72"
           >
             {showQR ? (
               <EyeOff className="w-4 h-4" />
@@ -126,7 +126,7 @@ export default function DonationLinks({
         {showQR && (
           <div className="flex flex-col items-center gap-2 ">
             <div className="bg-white p-4 rounded-lg">
-              <QRCodeSVG ref={qrRef} value={donationUrl} size={200} />
+              <QRCodeSVG ref={qrRef} value={donationUrl} size={244} />
             </div>
             <Button
               variant="outline"
