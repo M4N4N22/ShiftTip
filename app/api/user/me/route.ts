@@ -2,23 +2,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic"; // always fetch fresh data
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  console.log("[USER_ME] Request received");
+
   try {
-    const { wallet } = await req.json();
+    // -------------------------
+    // Parse body
+    // -------------------------
+    let body;
+    try {
+      body = await req.json();
+      console.log("[USER_ME] Parsed body:", body);
+    } catch (err) {
+      console.error("[USER_ME] Failed to parse JSON body", err);
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const wallet = body.wallet;
+    console.log("[USER_ME] Wallet:", wallet);
 
     if (!wallet) {
+      console.warn("[USER_ME] Missing wallet");
       return NextResponse.json(
         { error: "Missing wallet address" },
         { status: 400 }
       );
     }
 
+    // -------------------------
+    // DB Query
+    // -------------------------
+    console.log("[USER_ME] Fetching user from DB");
+
     const user = await prisma.user.findUnique({
       where: { wallet },
       include: {
         shiftsReceived: {
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             shiftId: true,
@@ -28,9 +53,9 @@ export async function POST(req: Request) {
             status: true,
             createdAt: true,
           },
-          orderBy: { createdAt: "desc" },
         },
         shiftsSent: {
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             shiftId: true,
@@ -40,10 +65,14 @@ export async function POST(req: Request) {
             status: true,
             createdAt: true,
           },
-          orderBy: { createdAt: "desc" },
         },
       },
     });
+
+    console.log(
+      "[USER_ME] DB result:",
+      user ? "User found" : "User not found"
+    );
 
     if (!user) {
       return NextResponse.json(
@@ -51,6 +80,11 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+
+    // -------------------------
+    // Success
+    // -------------------------
+    console.log("[USER_ME] Returning user data");
 
     return NextResponse.json({
       wallet: user.wallet,
@@ -65,10 +99,15 @@ export async function POST(req: Request) {
       shiftsReceived: user.shiftsReceived,
       shiftsSent: user.shiftsSent,
     });
+
   } catch (error: any) {
-    console.error("[USER_ME] Error:", error);
+    console.error("[USER_ME] Unhandled error:", {
+      message: error.message,
+      stack: error.stack,
+    });
+
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

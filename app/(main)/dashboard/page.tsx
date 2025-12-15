@@ -24,7 +24,11 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("settings");
   const [loadingUser, setLoadingUser] = useState(false);
 
-  // ✅ Fetch user data once wallet connects
+  const [stats, setStats] = useState<any[]>([]);
+  const [recentDonations, setRecentDonations] = useState<any[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Fetch user data once wallet connects
   useEffect(() => {
     const fetchUserData = async () => {
       if (!isConnected || !address) return;
@@ -42,7 +46,12 @@ export default function DashboardPage() {
           const data = await res.json();
           console.log("[USER FETCHED]", data);
 
-          if (data?.isCreator && data.name && data.preferredToken && data.preferredChain) {
+          if (
+            data?.isCreator &&
+            data.name &&
+            data.preferredToken &&
+            data.preferredChain
+          ) {
             setStreamerName(data.name || "");
             setDonationToken(data.preferredToken || "");
             setDonationChain(data.preferredChain || "");
@@ -65,6 +74,79 @@ export default function DashboardPage() {
     fetchUserData();
   }, [isConnected, address]);
 
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      if (!isSetup || !walletAddress) return;
+
+      setLoadingStats(true);
+
+      try {
+        const res = await fetch("/api/dashboard/stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch stats");
+
+        const data = await res.json();
+
+        // -------------------------
+        // Build stats cards
+        // -------------------------
+        setStats([
+          {
+            label: "Total Donations",
+            value: `$${data.totals.totalDonations.toFixed(2)}`,
+            change:
+              data.monthly.growthPercent !== null
+                ? `${data.monthly.growthPercent.toFixed(1)}%`
+                : "—",
+            icon: TrendingUp,
+          },
+          {
+            label: "Unique Donors",
+            value: data.totals.uniqueDonors.toString(),
+            change: `${data.totals.donationCount} donations`,
+            icon: Wallet,
+          },
+          {
+            label: "This Month",
+            value: `$${data.monthly.thisMonth.toFixed(2)}`,
+            change:
+              data.monthly.growthPercent !== null
+                ? `${data.monthly.growthPercent.toFixed(1)}%`
+                : "New",
+            icon: TrendingUp,
+          },
+        ]);
+
+        // -------------------------
+        // Recent donations
+        // -------------------------
+        setRecentDonations(
+          data.recentDonations.map((d: any) => ({
+            id: d.id,
+            donor: d.donorAddress
+              ? `${d.donorAddress.slice(0, 6)}...${d.donorAddress.slice(-4)}`
+              : "Anonymous",
+            amount: d.amount,
+            currency: d.token,
+            token: d.network,
+            time: new Date(d.completedAt).toLocaleString(),
+          }))
+        );
+      } catch (err) {
+        console.error("[DASHBOARD_STATS_ERROR]", err);
+        toast.error("Failed to load dashboard stats");
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, [isSetup, walletAddress]);
+
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const donationUrl = isSetup
     ? `${baseUrl}/donate?streamer=${encodeURIComponent(
@@ -77,42 +159,29 @@ export default function DashboardPage() {
     ? `${baseUrl}/overlay?streamer=${encodeURIComponent(streamerName)}`
     : "";
 
-  const stats = [
-    { label: "Total Donations", value: "$1,245", change: "+12.5%", icon: TrendingUp },
-    { label: "Unique Donors", value: "47", change: "+8", icon: Wallet },
-    { label: "This Month", value: "$345", change: "+23%", icon: TrendingUp },
-  ];
-
-  const recentDonations = [
-    { id: 1, donor: "CryptoFan42", amount: "50", currency: "USDC", token: "ETH", time: "2 mins ago" },
-    { id: 2, donor: "Anonymous", amount: "100", currency: "USDC", token: "BTC", time: "15 mins ago" },
-    { id: 3, donor: "Web3Supporter", amount: "25", currency: "USDC", token: "MATIC", time: "1 hour ago" },
-  ];
-
-  // ✅ Loading state while checking user data
+  // oading state while checking user data
   if (loadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg text-muted-foreground">
-        Checking user setup...
+        Almost there...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <Navigation />
-
-      <div className="container flex justify-center px-4 pt-24 pb-12 w-full">
+    <div className="min-h-screen w-full ">
+      <div className=" flex w-full items-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="flex-1"
         >
-          <h1 className="text-4xl font-bold mb-2 text-center">
+          <h1 className="text-4xl font-semibold mb-2 ">
             {isSetup ? "Manage Your Donations" : "Let's Get Started!"}
           </h1>
-          <p className="text-muted-foreground mb-8 text-center">
-            Manage your crypto donations and track your earnings
+          <p className="text-muted-foreground mb-8 text-sm">
+            Manage your donations and track your earnings
           </p>
 
           {!isSetup ? (
@@ -128,8 +197,12 @@ export default function DashboardPage() {
               setIsSetup={setIsSetup}
             />
           ) : (
-            <div className="space-y-6 min-w-5xl flex gap-3">
-              <StatsCards stats={stats} />
+            <div className="space-y-6 w-full flex flex-col gap-3 ">
+              {loadingStats ? (
+                <div className="text-muted-foreground">Loading stats...</div>
+              ) : (
+                <StatsCards stats={stats} />
+              )}
 
               <Tabs
                 value={activeTab}
@@ -150,7 +223,13 @@ export default function DashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="donations">
-                  <RecentDonations donations={recentDonations} />
+                  {loadingStats ? (
+                    <div className="text-muted-foreground">
+                      Loading donations...
+                    </div>
+                  ) : (
+                    <RecentDonations donations={recentDonations} />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="settings">

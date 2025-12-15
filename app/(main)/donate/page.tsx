@@ -32,11 +32,11 @@ function DonatePageInner() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full px-4"
+        className=" px-4 max-w-7xl"
       >
         <DonateHeader streamerName={streamerName} />
 
-        <Card className=" border-2 border-white/10 w-full">
+        <Card className=" w-full">
           <CardHeader>
             <CardTitle>Make a Donation</CardTitle>
             <CardDescription>
