@@ -185,14 +185,12 @@ export default function PairRateDisplay({
 
   return (
     <div className="bg-zinc-500/10 p-6 rounded-3xl backdrop-blur-3xl text-white shadow-lg">
-      <h3 className="font-semibold text-lg text-zinc-100 mb-2">
-        Conversion Summary
-      </h3>
+      <h3 className="font-semibold text-lg text-zinc-100 mb-2">Summary</h3>
 
       {loading && (
         <div className="flex items-center gap-2 text-zinc-400 text-sm">
           <Loader2 className="w-4 h-4 animate-spin" />
-          Fetching live rate...
+          Almost there...
         </div>
       )}
 
@@ -202,43 +200,66 @@ export default function PairRateDisplay({
 
       {data && !loading && !error && (
         <div className="space-y-4 text-sm">
+          {/* 
+        Keeping exchange rate visible for trust,
+        but hiding detailed payout math to reduce cognitive load.
+        Feedback: donors don’t need full transparency here.
+      */}
           <div>
             <p className="text-primary font-semibold text-base">
               1 {data.depositCoin.toUpperCase()} ≈{" "}
               {Number(data.rate).toFixed(3)} {data.settleCoin.toUpperCase()}
             </p>
-            <p className="text-zinc-400 text-xs italic">
-              (After network fees and SideShift spread)
-            </p>
+
+            {/* 
+        <p className="text-zinc-400 text-xs italic">
+          (After network fees and SideShift spread)
+        </p>
+        */}
           </div>
 
+          {/* 
+        Feedback-driven UX change:
+        - Skip “how much you want to donate” repetition
+        - Skip explicit “creator will receive” amount
+        Platforms like Twitch/Kick are not fully transparent here either.
+      */}
           <div className="bg-zinc-500/10 p-4 rounded-2xl text-sm">
             <p>
-              You’re tipping{" "}
+              You’re sending{" "}
               <span className="font-semibold text-white">
                 {Number(amount).toFixed(3)} {data.depositCoin.toUpperCase()}
               </span>{" "}
               on {data.depositNetwork}.
             </p>
-            <p className="mt-1">
-              The creator will receive approximately{" "}
-              <span className="font-semibold text-primary">
-                {receiveAmount} {data.settleCoin.toUpperCase()}
-              </span>{" "}
-              on {data.settleNetwork}.
-            </p>
+
+            {/*
+        <p className="mt-1">
+          The creator will receive approximately{" "}
+          <span className="font-semibold text-primary">
+            {receiveAmount} {data.settleCoin.toUpperCase()}
+          </span>{" "}
+          on {data.settleNetwork}.
+        </p>
+        */}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span>
-              Min tip: {Number(data.min).toFixed(2)}{" "}
-              {data.depositCoin.toUpperCase()}
-            </span>
-            <span>
-              Max tip: {Number(data.max).toFixed(0)}{" "}
-              {data.depositCoin.toUpperCase()}
-            </span>
-          </div>
+          {/* 
+        Min / Max ranges caused confusion in demos (5–60000 USDC).
+        These are still enforced server-side but hidden from UI.
+      */}
+          {/*
+      <div className="flex items-center justify-between text-xs text-zinc-400">
+        <span>
+          Min tip: {Number(data.min).toFixed(2)}{" "}
+          {data.depositCoin.toUpperCase()}
+        </span>
+        <span>
+          Max tip: {Number(data.max).toFixed(0)}{" "}
+          {data.depositCoin.toUpperCase()}
+        </span>
+      </div>
+      */}
 
           <Button
             className="w-full rounded-full mt-2 py-6 text-base font-semibold"

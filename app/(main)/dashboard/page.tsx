@@ -197,7 +197,7 @@ export default function DashboardPage() {
               setIsSetup={setIsSetup}
             />
           ) : (
-            <div className="space-y-6 w-full flex flex-col gap-3 ">
+            <div className="space-y-6 w-full flex flex-col justify-center items-center gap-3 ">
               {loadingStats ? (
                 <div className="text-muted-foreground">Loading stats...</div>
               ) : (
@@ -207,7 +207,7 @@ export default function DashboardPage() {
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
-                className="w-full"
+                className="min-w-4xl "
               >
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="links">Donation Links</TabsTrigger>
