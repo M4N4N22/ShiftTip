@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "application/json",
         "x-sideshift-secret": process.env.SIDESHIFT_SECRET!,
-        "x-user-ip": userIp,
+       
       },
       body: JSON.stringify(payload),
     });

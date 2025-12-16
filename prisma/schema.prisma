@@ -9,19 +9,22 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  wallet         String   @unique
-  name           String?
-  avatar         String?
-  bio            String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  preferredChain String?
-  preferredToken String?
-  isCreator      Boolean  @default(false)
-  isDonor        Boolean  @default(false)
-  shiftsReceived Shift[]  @relation("CreatorShifts")
-  shiftsSent     Shift[]  @relation("UserShifts")
+  id                 String               @id @default(cuid())
+  wallet             String               @unique
+  name               String?
+  avatar             String?
+  bio                String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  preferredChain     String?
+  preferredToken     String?
+  isCreator          Boolean              @default(false)
+  isDonor            Boolean              @default(false)
+  shiftsReceived     Shift[]              @relation("CreatorShifts")
+  shiftsSent         Shift[]              @relation("UserShifts")
+  memberships        Membership[]
+  MembershipPlan     MembershipPlan[]
+  MembershipCheckout MembershipCheckout[]
 }
 
 model Shift {
@@ -46,4 +49,63 @@ model Shift {
   settleAddress  String
   creator        User      @relation("CreatorShifts", fields: [creatorId], references: [id])
   donor          User      @relation("UserShifts", fields: [userId], references: [id])
+}
+
+model MembershipPlan {
+  id            String @id @default(cuid())
+  creatorId     String
+  creatorWallet String
+
+  name        String
+  description String
+  perks       String[] // Postgres supports string[]
+
+  price   Float
+  token   String
+  network String
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator     User                 @relation(fields: [creatorId], references: [id])
+  checkouts   MembershipCheckout[]
+  memberships Membership[]
+}
+
+model MembershipCheckout {
+  id         String @id @default(cuid())
+  checkoutId String @unique // SideShift checkout.id
+
+  planId String
+  userId String
+
+  amount  Float
+  token   String
+  network String
+
+  status String @default("pending") // pending | success | fail
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan MembershipPlan @relation(fields: [planId], references: [id])
+  user User           @relation(fields: [userId], references: [id])
+}
+
+model Membership {
+  id String @id @default(cuid())
+
+  planId String
+  userId String
+
+  status    String    @default("active") // active | cancelled | expired
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  plan MembershipPlan @relation(fields: [planId], references: [id])
+  user User           @relation(fields: [userId], references: [id])
+
+  @@unique([planId, userId])
 }
